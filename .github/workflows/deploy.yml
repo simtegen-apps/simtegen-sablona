@@ -1,0 +1,63 @@
+# Nasazení na Cloudflare Pages.
+#
+# Push do main = produkce (https://<repo>.pages.dev), push větve build/* =
+# preview (https://<větev>.<repo>.pages.dev). Merge dělá výhradně člověk;
+# SimteGen na tenhle soubor nesahá — jeho token nemá právo na workflow
+# soubory a GitHub takový push odmítne celý.
+#
+# Secrets CLOUDFLARE_API_TOKEN a CLOUDFLARE_ACCOUNT_ID jsou org-level
+# (Settings → Secrets → Actions v organizaci), takže je nový produkt dědí
+# a v repu se nenastavuje nic.
+
+name: Nasazeni
+
+on:
+  push:
+    branches:
+      - main
+      - "build/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Org secrets on the Free plan reach only PUBLIC repositories. Without
+      # this guard a private repo fails later with wrangler's generic "set
+      # CLOUDFLARE_API_TOKEN" — true, but pointing nowhere.
+      - name: Kontrola secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Org secrets CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID nejsou v tomto repu dostupne."
+            echo "Nejcastejsi pricina: repo je Private — org secrets na Free planu plati jen pro Public repa."
+            echo "Prepni Settings -> General -> Visibility na Public a spust workflow znovu."
+            exit 1
+          fi
+
+      - name: Kontrola manifestu proti kodu
+        run: python3 kontrola_manifestu.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Projekt se jmenuje po repozitari, takze sablona nepotrebuje zadnou
+      # per-produkt parametrizaci. Create je idempotentni diky "|| true" —
+      # kdyz projekt existuje, wrangler si postezuje a jede se dal.
+      - name: Zajisti Pages projekt
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ github.event.repository.name }}
+        run: npx --yes wrangler@3 pages project create "$PROJECT" --production-branch=main || true
+
+      - name: Nasad
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ github.event.repository.name }}
+        run: npx --yes wrangler@3 pages deploy web --project-name="$PROJECT" --branch="$GITHUB_REF_NAME"

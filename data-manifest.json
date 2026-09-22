@@ -1,0 +1,10 @@
+{
+  "produkt": "",
+  "obsah_zakaznika": "neuklada_se",
+  "zpracovani": "v_prohlizeci",
+  "externi_pozadavky": "zadne",
+  "uloziste_v_prohlizeci": [],
+  "cookies": "zadne",
+  "subzpracovatele": [],
+  "poznamka": "Jediny zdroj pravdy o datech produktu. Zasady na webu se pisou podle nej a kontrola_manifestu.py shazuje build, kdyz kod sahne na neco, co tu neni deklarovane."
+}
