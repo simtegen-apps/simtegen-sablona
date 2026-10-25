@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "description": "Functions běží jen pro /api/* (hlášení chyb) — statická stránka je nesmí platit.",
+  "include": ["/api/*"],
+  "exclude": []
+}
