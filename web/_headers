@@ -1,0 +1,7 @@
+# simtegen-hlavicky — ze šablony, NEUPRAVOVAT V PRODUKTU (stavba ho obnoví).
+#
+# Cache-Control: no-cache — prohlížeč si styl a skript uloží, ale před použitím
+# se zeptá (ETag → 304). Bez toho dávala zóna Cloudflare stylům a skriptům
+# 4 hodiny: nová stránka se starým styl.css / simtegen.js (web firmy 6. 11. 2026).
+/*
+  Cache-Control: no-cache
